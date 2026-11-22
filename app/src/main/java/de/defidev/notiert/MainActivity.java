@@ -6,6 +6,7 @@ import android.os.Build;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.view.WindowInsets;
 import android.webkit.*;
 import java.io.ByteArrayInputStream;
@@ -22,7 +23,7 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         web = new WebView(this);
-        web.setBackgroundColor(0xfff8f7f2);
+        web.setBackgroundColor(0xfff7f8f5);
         web.getSettings().setJavaScriptEnabled(true);
         web.getSettings().setDomStorageEnabled(true);
         web.getSettings().setAllowFileAccess(false);
@@ -37,7 +38,7 @@ public final class MainActivity extends Activity {
                         && path != null && path.matches("/[a-z]+[.](html|js|css)")) {
                     String mime = path.endsWith(".js") ? "application/javascript" :
                                   path.endsWith(".css") ? "text/css" : "text/html";
-                    try { return new WebResourceResponse(mime, "UTF-8", getAssets().open(path.substring(1))); }
+                    try { return new WebResourceResponse(mime, "UTF-8", 200, "OK", java.util.Collections.emptyMap(), getAssets().open(path.substring(1))); }
                     catch (IOException ignored) { }
                 }
                 return new WebResourceResponse("text/plain", "UTF-8", 404, "Not found",
@@ -64,18 +65,24 @@ public final class MainActivity extends Activity {
         web.addJavascriptInterface(new Device(), "Device");
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR |
                 View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        getWindow().setStatusBarColor(0xfff8f7f2);
-        getWindow().setNavigationBarColor(0xfff8f7f2);
+        getWindow().setStatusBarColor(0xfff7f8f5);
+        getWindow().setNavigationBarColor(0xfff7f8f5);
+        // Size the WebView itself to the usable rectangle. Padding applied directly to
+        // WebView does not reliably move its visual viewport on Samsung devices.
+        FrameLayout viewport = new FrameLayout(this);
+        viewport.setBackgroundColor(0xfff7f8f5);
+        viewport.addView(web, new FrameLayout.LayoutParams(-1, -1));
         if (Build.VERSION.SDK_INT >= 30) {
             getWindow().setDecorFitsSystemWindows(false);
-            web.setOnApplyWindowInsetsListener((v, w) -> {
+            viewport.setOnApplyWindowInsetsListener((v, w) -> {
                 android.graphics.Insets bars = w.getInsets(WindowInsets.Type.systemBars() |
                         WindowInsets.Type.displayCutout() | WindowInsets.Type.ime());
                 v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                 return WindowInsets.CONSUMED;
             });
         }
-        setContentView(web);
+        setContentView(viewport);
+        viewport.requestApplyInsets();
         web.loadUrl(ORIGIN + "/index.html");
     }
 

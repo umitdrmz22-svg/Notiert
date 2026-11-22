@@ -2,6 +2,14 @@
 
 Birden çok firma veya bölümle çalışan kişiler için çevrimdışı Android toplantı defteri. İngilizce, Almanca, Türkçe ve İspanyolca arayüz içerir. Serbest metin, karar, görev ve sesli not aynı toplantı sayfasında tutulur.
 
+## Klasörler, arama ve takvim
+
+Ana ekranda **Yeni klasör** ile bir firma klasörü aç. İçine girdikten sonra **Yeni alt klasör** ile bölüm veya makine ekle. Örneğin *Firma A / Produktion / Verwolfung* altında açılan toplantı doğrudan oraya kaydedilir. Mevcut sayfanın klasörünü toplantı bilgilerinden değiştirebilirsin. Firma, bölüm, süreç ve konu ana ekranda ayrı ayrı seçilebilir.
+
+Ana ekrandaki arama kutusu toplantı metni, şablon başlıkları ve içerikleri, kararlar, görev ve sorumlular, kişiler ve klasör adlarında arar. Bir klasörde ararken alt klasörleri dahil edebilir veya aramayı o seviyeye indirebilirsin. Eşleşmelerde klasör yolu, tarih ve metin alıntısı görünür. Birden fazla kelime farklı alanlarda da eşleşebilir. Ses klipleri ses biçiminde kalır.
+
+**Şablonlar** vardiya devri, güvenlik turu, GBU, müşteri, bakım, denetim, proje ve ekip toplantısı için ayrı bölümler içerir. Kendi şablonunu da bölüm başlıklarıyla oluşturabilirsin. **Takvim** seçilen günün toplantılarını başlangıç saatine göre, ayrıca takip tarihlerini ve açık görevlerin terminlerini gösterir. Bir toplantıya başlangıç ve bitiş saati girilebilir. Dizinde iki tarih arasındaki toplantıları süzebilirsin.
+
 ## Bir toplantının yaşam döngüsü
 
 1. **Yeni toplantı** ile boş sayfa aç veya vardiya devri, iş güvenliği turu, risk değerlendirmesi ve müşteri görüşmesi şablonlarından birini seç.

@@ -2,12 +2,14 @@ plugins { id 'com.android.application' }
 android {
     namespace 'de.defidev.notiert'
     compileSdk 36
+    testOptions.unitTests.includeAndroidResources = true
     defaultConfig {
         applicationId 'de.defidev.notiert'
         minSdk 26
         targetSdk 36
-        versionCode 1
-        versionName '0.1.0'
+        manifestPlaceholders = [launcherLabel: 'Notiert']
+        versionCode 2
+        versionName '0.2.0'
     }
     signingConfigs {
         if (System.getenv('UPLOAD_STORE')) {
@@ -20,7 +22,16 @@ android {
         }
     }
     buildTypes {
-        debug { applicationIdSuffix '.preview' }
+        debug {
+            applicationIdSuffix providers.gradleProperty('previewSuffix').getOrElse('.preview')
+            if (providers.gradleProperty('previewSuffix').getOrElse('') == '.preview2')
+                manifestPlaceholders.launcherLabel = 'Notiert 0.2'
+        }
         release { if (System.getenv('UPLOAD_STORE')) signingConfig signingConfigs.upload }
     }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.15.1'
 }

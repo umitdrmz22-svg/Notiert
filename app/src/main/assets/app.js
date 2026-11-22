@@ -2,16 +2,10 @@
 const tabs = [
   ["book", "book"],
   ["browse", "folder"],
+  ["calendar", "calendar"],
   ["tasks", "tasks"],
   ["settings", "settings"],
 ];
-const templates = {
-  blank: [],
-  handover: ["completed", "pending"],
-  walk: ["location", "observations"],
-  assessment: ["location", "observations", "existing"],
-  client: ["requests", "pending"],
-};
 const uid = () =>
   crypto.randomUUID
     ? crypto.randomUUID()
@@ -43,7 +37,15 @@ const tags = (s) =>
     .filter(Boolean);
 const title = (n) => n.title.trim() || t("untitled");
 const desc = (n) =>
-  [n.company, n.dept, n.area, ...tags(n.topic)].filter(Boolean).join(" · ");
+  [
+    ...folderPath(n.folder).map((x) => x.name),
+    n.company,
+    n.dept,
+    n.area,
+    ...tags(n.topic),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 const sorted = (items) =>
   items
     .slice()
@@ -56,13 +58,21 @@ const sorted = (items) =>
 const byId = (id) => notes.find((n) => n.id === id);
 function openDatabase() {
   return new Promise((ok, fail) => {
-    const req = indexedDB.open("notiert.workbook", 1);
-    req.onupgradeneeded = () => {
+    const req = indexedDB.open("notiert.workbook", 2);
+    req.onupgradeneeded = (event) => {
       const database = req.result;
-      database.createObjectStore("pages", { keyPath: "id" });
-      database
-        .createObjectStore("audio", { keyPath: "id" })
-        .createIndex("page", "page");
+      if (event.oldVersion < 1) {
+        database.createObjectStore("pages", { keyPath: "id" });
+        database
+          .createObjectStore("audio", { keyPath: "id" })
+          .createIndex("page", "page");
+      }
+      if (event.oldVersion < 2) {
+        database
+          .createObjectStore("folders", { keyPath: "id" })
+          .createIndex("parentName", ["parent", "key"], { unique: true });
+        database.createObjectStore("templates", { keyPath: "id" });
+      }
     };
     req.onsuccess = () => ok(req.result);
     req.onerror = () => fail(req.error);
@@ -110,12 +120,16 @@ async function persist(n) {
   }
 }
 async function newPage(kind) {
-  const sections = templates[kind] || [],
+  const sections = templateParts(kind),
     n = {
       id: uid(),
       title: "",
       type: kind,
-      date: day(),
+      date: tab === "calendar" ? pickedDate : day(),
+      folder: tab === "book" ? homeFolder : "",
+      startTime: "",
+      endTime: "",
+      followDate: "",
       updated: Date.now(),
       company: "",
       dept: "",
@@ -127,7 +141,8 @@ async function newPage(kind) {
             ? t("safety")
             : "",
       participants: "",
-      body: sections.map((k) => t(k) + "\n").join("\n"),
+      sections: sections.map((label) => ({ label, value: "" })),
+      body: "",
       decisions: "",
       tasks: [],
       pin: false,
@@ -181,7 +196,6 @@ async function openPage(id, isNew = false) {
   detailsOpen = false;
   navigate();
   await refreshClips(id);
-  if (isNew) $("#title")?.focus();
 }
 function pageRow(n) {
   return (
@@ -196,33 +210,6 @@ function pageRow(n) {
     "</small></span>" +
     icon("next") +
     "</button>"
-  );
-}
-function book() {
-  const list = sorted(notes);
-  return (
-    "<h1>" +
-    t("meetings") +
-    '</h1><div class="cover"><span class="meta">' +
-    esc(fmt(day())) +
-    "</span><h2>" +
-    t("startPage") +
-    "</h2>" +
-    button("create", t("new"), "plus", "primary", "blank") +
-    "</div><h2>" +
-    t("recent") +
-    "</h2>" +
-    (list.length
-      ? list.slice(0, 6).map(pageRow).join("")
-      : '<p class="muted">' + t("empty") + "</p>") +
-    '<section class="section"><h2>' +
-    t("templates") +
-    '</h2><div class="templates">' +
-    Object.keys(templates)
-      .filter((k) => k !== "blank")
-      .map((k) => button("create", t(k), "pen", "template", k))
-      .join("") +
-    "</div></section>"
   );
 }
 function values(key, pages = notes) {
@@ -248,34 +235,26 @@ function optionsFor(key) {
   );
 }
 function filtered() {
-  const needle = filters.q.trim().toLocaleLowerCase(ui);
   return sorted(
     notes.filter(
       (n) =>
-        ["company", "dept", "area"].every(
-          (k) => !filters[k] || n[k].trim() === filters[k],
-        ) &&
-        (!filters.topic || tags(n.topic).includes(filters.topic)) &&
-        (!needle ||
-          [
-            title(n),
-            desc(n),
-            n.participants,
-            n.body,
-            n.decisions,
-            ...n.tasks.flatMap((o) => [o.text, o.owner]),
-          ]
-            .join(" ")
-            .toLocaleLowerCase(ui)
-            .includes(needle)),
+        (!filters.folder || n.folder === filters.folder) &&
+        (!filters.start || n.date >= filters.start) &&
+        (!filters.end || n.date <= filters.end) &&
+        criteria.every((k) => matches(n, k)),
     ),
   );
 }
 function found() {
-  let list = filtered();
-  return list.length
-    ? list.map(pageRow).join("")
-    : '<p class="muted">' + t("none") + "</p>";
+  const terms = queryTerms(filters.q);
+  const rows = filtered()
+    .map((n) => {
+      if (!terms.length) return pageRow(n);
+      const match = searchNote(n, terms, "all");
+      return match ? searchNoteRow(n, match, terms) : "";
+    })
+    .filter(Boolean);
+  return rows.join("") || '<p class="muted">' + t("none") + "</p>";
 }
 function indexView() {
   return (
@@ -307,6 +286,29 @@ function indexView() {
       )
       .join("") +
     "</div>" +
+    '<div class="grid">' +
+    field(
+      t("fromDate"),
+      '<input type="date" data-range="start" value="' +
+        esc(filters.start) +
+        '">',
+    ) +
+    field(
+      t("toDate"),
+      '<input type="date" data-range="end" value="' + esc(filters.end) + '">',
+    ) +
+    "</div>" +
+    (filters.folder
+      ? '<p class="meta">' +
+        t("folder") +
+        " · " +
+        esc(
+          folderPath(filters.folder)
+            .map((x) => x.name)
+            .join(" / "),
+        ) +
+        "</p>"
+      : "") +
     button("reset", t("clear"), "x", "soft") +
     '</details><div id="results">' +
     found() +
@@ -477,7 +479,7 @@ function editor() {
       ),
     ) +
     '<span class="bookdate" id="pageDate">' +
-    esc(fmt(n.date)) +
+    esc(showSchedule(n)) +
     '</span><p class="meta" id="pageTrail">' +
     esc(desc(n)) +
     "</p>" +
@@ -487,6 +489,8 @@ function editor() {
     t("details") +
     "</summary>" +
     field(t("date"), textInput("date", n, 'type="date" required')) +
+    scheduleFields(n) +
+    organizationFields(n) +
     '<div class="grid">' +
     ["company", "dept", "area"].map((k) => dataField(k, n)).join("") +
     field(
@@ -496,6 +500,15 @@ function editor() {
     "</div>" +
     field(t("participants"), textInput("participants", n)) +
     "</details>" +
+    (n.sections?.length
+      ? '<details class="notemeta structured" open><summary>' +
+        esc(templateName(n.type)) +
+        " · " +
+        t("sections") +
+        "</summary>" +
+        sectionFields(n) +
+        "</details>"
+      : "") +
     "<h2>" +
     t("notes") +
     '</h2><textarea aria-label="' +
@@ -595,7 +608,12 @@ function ask(label, action, id) {
 function plain(n) {
   return [
     title(n),
-    fmt(n.date),
+    showSchedule(n),
+    ...(n.followDate ? [t("followup") + " · " + fmt(n.followDate)] : []),
+    ...folderPath(n.folder).map((x) => t("folder") + " · " + x.name),
+    ...(n.sections || [])
+      .filter((x) => x.value)
+      .map((x) => x.label + "\n" + x.value),
     ...["company", "dept", "area", "topic", "participants"]
       .filter((k) => n[k])
       .map((k) => t(k) + " · " + n[k]),
@@ -623,9 +641,15 @@ function render() {
   $("#nav").hidden = !!editing;
   $("#screen").innerHTML = editing
     ? editor()
-    : { book, browse: indexView, tasks: tasksView, settings: settingsView }[
-        tab
-      ]();
+    : {
+        book: workspaceHome,
+        browse: indexView,
+        calendar: calendarView,
+        tasks: tasksView,
+        settings: settingsView,
+      }[tab]();
+  $("#screen").dataset.view = editing ? "editor" : tab;
+  organizerBind();
   const meta = $("#metadata");
   if (meta)
     meta.ontoggle = () => {
@@ -661,10 +685,32 @@ function render() {
       (e.oninput = () => {
         const n = note(),
           k = e.dataset.key;
-        if (k === "date" && !e.value) return;
+        if (k === "date" && !e.value) {
+          e.value = n.date;
+          return;
+        }
+        if (
+          (k === "startTime" && e.value && n.endTime && e.value >= n.endTime) ||
+          (k === "endTime" && e.value && n.startTime && e.value <= n.startTime)
+        ) {
+          e.value = n[k] || "";
+          notify(t("invalidRange"));
+          return;
+        }
         n[k] = e.value;
-        if (["company", "dept", "area", "topic", "date"].includes(k)) {
-          $("#pageDate").textContent = fmt(n.date);
+        if (
+          [
+            "company",
+            "dept",
+            "area",
+            "topic",
+            "date",
+            "startTime",
+            "endTime",
+            "folder",
+          ].includes(k)
+        ) {
+          $("#pageDate").textContent = showSchedule(n);
           $("#pageTrail").textContent = desc(n);
           $("#carry").innerHTML = carried(n);
         }
@@ -748,6 +794,10 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) window.stopActiveRecording();
 });
 async function action(a, v) {
+  if (a.startsWith("org")) {
+    await organizerAction(a, v);
+    return;
+  }
   switch (a) {
     case "tab":
       if (editing && !(await leaveEditor())) return;
@@ -908,6 +958,17 @@ window.appBack = () => {
     action("exit").catch(() => notify(t("error")));
     return true;
   }
+  if (tab === "book" && librarySearch.query) {
+    resetHomeSearch();
+    render();
+    return true;
+  }
+  if (tab === "book" && (homeFolder || homeCategory)) {
+    if (homeCategory) homeCategory = "";
+    else homeFolder = folderOf(homeFolder)?.parent || "";
+    navigate();
+    return true;
+  }
   if (tab !== "book") {
     action("tab", "book");
     return true;
@@ -917,7 +978,11 @@ window.appBack = () => {
 (async () => {
   try {
     db = await openDatabase();
-    notes = await query(db.transaction("pages").objectStore("pages").getAll());
+    [notes, folders, customTemplates] = await Promise.all(
+      ["pages", "folders", "templates"].map((store) =>
+        query(db.transaction(store).objectStore(store).getAll()),
+      ),
+    );
     render();
   } catch (e) {
     $("#screen").textContent = t("error");

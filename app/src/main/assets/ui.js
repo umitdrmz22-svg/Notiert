@@ -14,6 +14,10 @@ let ui = localStorage.getItem("interface") || "en";
 if (!codes.includes(ui)) ui = "en";
 const t = (key) => strings[key][codes.indexOf(ui)];
 const paths = {
+  calendar: "M3 6h18v15H3z M3 10h18 M7 3v5 M17 3v5 M7 14h3 M14 14h3",
+  office:
+    "M4 21V5l12-2v18 M16 10h4v11 M2 21h20 M8 8h1 M11 8h1 M8 12h1 M11 12h1 M8 16h1",
+  tool: "M14 4a6 6 0 0 0-7 8l-4 5a2 2 0 0 0 3 3l6-6a6 6 0 0 0 7-7l-4 3-3-3z",
   book: "M3 4q5-2 9 1 4-3 9-1v15q-5-2-9 1-4-3-9-1z M12 5v15",
   globe:
     "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 M3 12h18 M12 3q-8 9 0 18 8-9 0-18",
@@ -46,7 +50,7 @@ const icon = (key) =>
   paths[key] +
   '"/></svg>';
 const button = (action, label, ic = "", cls = "", val = "") =>
-  '<button class="' +
+  '<button type="button" class="' +
   cls +
   '" data-act="' +
   esc(action) +
