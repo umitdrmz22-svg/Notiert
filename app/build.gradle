@@ -1,0 +1,26 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'de.defidev.notiert'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'de.defidev.notiert'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+    }
+    signingConfigs {
+        if (System.getenv('UPLOAD_STORE')) {
+            upload {
+                storeFile file(System.getenv('UPLOAD_STORE'))
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        debug { applicationIdSuffix '.preview' }
+        release { if (System.getenv('UPLOAD_STORE')) signingConfig signingConfigs.upload }
+    }
+}
