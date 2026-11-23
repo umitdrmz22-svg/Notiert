@@ -4,6 +4,8 @@ Birden çok firma veya bölümle çalışan kişiler için çevrimdışı Androi
 
 ## Klasörler, arama ve takvim
 
+Her klasörün kapağına altı renkten birini verebilirsin. Ana ekranda klasör başlığının altında doğrudan o klasördeki toplantı ve alt klasör sayıları görünür. Var olan klasörlerin rengi **Klasörü düzenle** ekranından değiştirilebilir. Kapaktaki tarih bugünün ajandasını, **Açık görevler** ise tüm defterin açık görevlerini açar.
+
 Ana ekranda **Yeni klasör** ile bir firma klasörü aç. İçine girdikten sonra **Yeni alt klasör** ile bölüm veya makine ekle. Örneğin *Firma A / Produktion / Verwolfung* altında açılan toplantı doğrudan oraya kaydedilir. Mevcut sayfanın klasörünü toplantı bilgilerinden değiştirebilirsin. Firma, bölüm, süreç ve konu ana ekranda ayrı ayrı seçilebilir.
 
 Ana ekrandaki arama kutusu toplantı metni, şablon başlıkları ve içerikleri, kararlar, görev ve sorumlular, kişiler ve klasör adlarında arar. Bir klasörde ararken alt klasörleri dahil edebilir veya aramayı o seviyeye indirebilirsin. Eşleşmelerde klasör yolu, tarih ve metin alıntısı görünür. Birden fazla kelime farklı alanlarda da eşleşebilir. Ses klipleri ses biçiminde kalır.

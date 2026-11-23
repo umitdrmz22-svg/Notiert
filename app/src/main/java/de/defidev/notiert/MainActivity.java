@@ -23,7 +23,7 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         web = new WebView(this);
-        web.setBackgroundColor(0xfff7f8f5);
+        web.setBackgroundColor(0xfffaf6ee);
         web.getSettings().setJavaScriptEnabled(true);
         web.getSettings().setDomStorageEnabled(true);
         web.getSettings().setAllowFileAccess(false);
@@ -35,8 +35,8 @@ public final class MainActivity extends Activity {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
                 String path = req.getUrl().getPath();
                 if (ORIGIN.equals(req.getUrl().getScheme() + "://" + req.getUrl().getAuthority())
-                        && path != null && path.matches("/[a-z]+[.](html|js|css)")) {
-                    String mime = path.endsWith(".js") ? "application/javascript" :
+                        && path != null && (path.matches("/[a-z]+[.](html|js|css)") || path.equals("/display.ttf"))) {
+                    String mime = path.endsWith(".ttf") ? "font/ttf" : path.endsWith(".js") ? "application/javascript" :
                                   path.endsWith(".css") ? "text/css" : "text/html";
                     try { return new WebResourceResponse(mime, "UTF-8", 200, "OK", java.util.Collections.emptyMap(), getAssets().open(path.substring(1))); }
                     catch (IOException ignored) { }
@@ -65,12 +65,12 @@ public final class MainActivity extends Activity {
         web.addJavascriptInterface(new Device(), "Device");
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR |
                 View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        getWindow().setStatusBarColor(0xfff7f8f5);
-        getWindow().setNavigationBarColor(0xfff7f8f5);
+        getWindow().setStatusBarColor(0xfffaf6ee);
+        getWindow().setNavigationBarColor(0xfffaf6ee);
         // Size the WebView itself to the usable rectangle. Padding applied directly to
         // WebView does not reliably move its visual viewport on Samsung devices.
         FrameLayout viewport = new FrameLayout(this);
-        viewport.setBackgroundColor(0xfff7f8f5);
+        viewport.setBackgroundColor(0xfffaf6ee);
         viewport.addView(web, new FrameLayout.LayoutParams(-1, -1));
         if (Build.VERSION.SDK_INT >= 30) {
             getWindow().setDecorFitsSystemWindows(false);

@@ -15,6 +15,60 @@ const folderIcons = {
   area: "tool",
   topic: "tag",
 };
+const folderColors = ["ochre", "fig", "jade", "clay", "iris", "sea"];
+function folderColor(folder) {
+  if (folderColors.includes(folder?.color)) return folder.color;
+  const key = folder?.id || "";
+  return folderColors[
+    Array.from(key).reduce((sum, ch) => sum + ch.charCodeAt(0), 0) %
+      folderColors.length
+  ];
+}
+function folderTile(folder) {
+  const count = notes.filter((n) => n.folder === folder.id).length,
+    nested = folders.filter((f) => f.parent === folder.id).length;
+  return (
+    '<button class="dossier color-' +
+    folderColor(folder) +
+    '" data-act="orgFolder" data-val="' +
+    esc(folder.id) +
+    '"><span class="dossiername">' +
+    esc(folder.name) +
+    '</span><span class="dosmeta">' +
+    icon("book") +
+    count +
+    '<span class="sr">' +
+    t("notes") +
+    "</span>" +
+    icon("folder") +
+    nested +
+    '<span class="sr">' +
+    t("folders") +
+    "</span></span></button>"
+  );
+}
+function colorPicker(selected) {
+  return (
+    '<fieldset class="inkpicker"><legend>' +
+    t("folderColor") +
+    "</legend>" +
+    folderColors
+      .map(
+        (c) =>
+          '<label class="inkswatch color-' +
+          c +
+          '"><input type="radio" name="foldercolor" value="' +
+          c +
+          '" ' +
+          (c === selected ? "checked" : "") +
+          "><span>" +
+          esc(t(c)) +
+          "</span></label>",
+      )
+      .join("") +
+    "</fieldset>"
+  );
+}
 let showAllFolders = false;
 let folders = [],
   customTemplates = [],
@@ -52,38 +106,37 @@ function workspaceHome() {
   const categorised = homeCategory ? values(homeCategory, pages) : [];
   const folderList = children
     .slice(0, showAllFolders ? children.length : 3)
-    .map(
-      (x) =>
-        '<button class="folderrow" data-act="orgFolder" data-val="' +
-        x.id +
-        '"><span class="foldericon">' +
-        icon("folder") +
-        "</span><strong>" +
-        esc(x.name) +
-        "</strong><small>" +
-        notes.filter((n) => n.folder === x.id).length +
-        "</small>" +
-        icon("next") +
-        "</button>",
-    )
+    .map(folderTile)
     .join("");
   return (
-    '<div class="mast"><div><p class="dateline">' +
-    esc(
-      new Intl.DateTimeFormat(ui, {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      }).format(new Date()),
-    ) +
+    '<div class="mast color-' +
+    folderColor(f) +
+    '"><div class="spine" aria-hidden="true"></div><div class="mastcopy"><p class="dateline">' +
+    esc(new Intl.DateTimeFormat(ui, { weekday: "long" }).format(new Date())) +
     "</p><h1>" +
     esc(f?.name || t("book")) +
-    "</h1></div>" +
-    button("orgNew", t("new"), "plus", "primary") +
+    '</h1></div><button type="button" class="coverdate" data-act="orgAgenda" aria-label="' +
+    esc(t("calendar") + " · " + fmt(day())) +
+    '"><span>' +
+    esc(new Intl.DateTimeFormat(ui, { month: "short" }).format(new Date())) +
+    "</span><b>" +
+    new Date().getDate() +
+    "</b></button>" +
+    button("orgNew", t("new"), "pen", "primary") +
     "</div>" +
     '<div class="quicktools">' +
     button("orgTemplates", t("templateLibrary"), "layers", "shortcut") +
-    button("tab", t("calendar"), "calendar", "shortcut", "calendar") +
+    button(
+      "orgOpenTasks",
+      t("openTaskCount") +
+        " · " +
+        notes.reduce(
+          (n, page) => n + page.tasks.filter((task) => !task.done).length,
+          0,
+        ),
+      "tasks",
+      "shortcut",
+    ) +
     "</div>" +
     homeSearchMarkup() +
     '<div id="homeShelves">' +
@@ -107,10 +160,12 @@ function workspaceHome() {
         button("orgRename", t("rename"), "pen", "quiet") +
         "</div>"
       : "") +
+    '<div class="dossiers">' +
     (folderList ||
       (!f
         ? button("orgAddFolder", t("createFirst"), "folder", "emptyfolder")
-        : "")) +
+        : button("orgAddFolder", t("newSubfolder"), "folder", "emptyfolder"))) +
+    "</div>" +
     (children.length > 3
       ? button(
           "orgShowFolders",
@@ -185,6 +240,14 @@ function folderForm(edit) {
           esc(f?.name || "") +
           '">',
       ) +
+      colorPicker(
+        f
+          ? folderColor(f)
+          : folderColors[
+              folders.filter((o) => o.parent === homeFolder).length %
+                folderColors.length
+            ],
+      ) +
       '<div class="actions"><button class="primary">' +
       t("save") +
       "</button>" +
@@ -205,7 +268,13 @@ function folderForm(edit) {
       notify(t("duplicate"));
       return;
     }
-    const item = { id: f?.id || uid(), parent, name, key };
+    const item = {
+      id: f?.id || uid(),
+      parent,
+      name,
+      key,
+      color: $("#folderform input[name=foldercolor]:checked").value,
+    };
     try {
       await transaction(["folders"], (tx) =>
         tx.objectStore("folders").put(item),
@@ -233,7 +302,9 @@ function templateList() {
       options
         .map(
           (k) =>
-            '<button class="item tpl" data-act="orgPreview" data-val="' +
+            '<button class="item tpl color-' +
+            folderColors[options.indexOf(k) % folderColors.length] +
+            '" data-act="orgPreview" data-val="' +
             esc(k) +
             '"><i>' +
             icon("layers") +
@@ -595,6 +666,17 @@ async function organizerAction(a, v) {
     case "orgMonth":
       monthMove(Number(v));
       render();
+      break;
+    case "orgOpenTasks":
+      taskMode = "open";
+      tab = "tasks";
+      navigate();
+      break;
+    case "orgAgenda":
+      tab = "calendar";
+      pickedDate = day();
+      monthShown = pickedDate.slice(0, 7);
+      navigate();
       break;
     case "orgToday":
       pickedDate = day();

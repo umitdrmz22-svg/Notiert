@@ -365,7 +365,12 @@ Object.assign(strings, {
     "Klasör adı",
     "Nombre de la carpeta",
   ],
-  rename: ["Rename", "Umbenennen", "Yeniden adlandır", "Cambiar nombre"],
+  rename: [
+    "Edit folder",
+    "Ordner bearbeiten",
+    "Klasörü düzenle",
+    "Editar carpeta",
+  ],
   rootFolder: [
     "All folders",
     "Alle Ordner",
@@ -696,5 +701,27 @@ Object.assign(strings, {
     "Weniger Ordner zeigen",
     "Daha az klasör göster",
     "Ver menos carpetas",
+  ],
+});
+Object.assign(strings, {
+  folderColor: [
+    "Folder colour",
+    "Ordnerfarbe",
+    "Klasör rengi",
+    "Color de carpeta",
+  ],
+  ochre: ["Saffron", "Safran", "Safran", "Azafrán"],
+  fig: ["Plum", "Pflaume", "Mürdüm", "Ciruela"],
+  jade: ["Jade", "Jade", "Yeşim", "Jade"],
+  clay: ["Terracotta", "Terrakotta", "Kiremit", "Terracota"],
+  iris: ["Lilac", "Flieder", "Leylak", "Lila"],
+  sea: ["Sea blue", "Meerblau", "Deniz mavisi", "Azul marino"],
+});
+Object.assign(strings, {
+  openTaskCount: [
+    "Open tasks",
+    "Offene Aufgaben",
+    "Açık görevler",
+    "Tareas pendientes",
   ],
 });

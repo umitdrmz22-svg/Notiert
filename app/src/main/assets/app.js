@@ -198,17 +198,27 @@ async function openPage(id, isNew = false) {
   await refreshClips(id);
 }
 function pageRow(n) {
+  const date = new Date(n.date + "T12:00:00"),
+    valid = !Number.isNaN(date.getTime());
+  const month = valid
+    ? new Intl.DateTimeFormat(ui, { month: "short" }).format(date)
+    : "";
+  const heading = valid ? date.getDate() : "—";
   return (
-    '<button class="item" data-act="openPage" data-val="' +
-    n.id +
-    '"><span class="listicon">' +
-    icon(n.pin ? "pin" : "book") +
-    '</span><span class="grow">' +
+    '<button class="item pageitem color-' +
+    folderColor(folderOf(n.folder)) +
+    '" data-act="openPage" data-val="' +
+    esc(n.id) +
+    '"><span class="datestamp"><b>' +
+    heading +
+    "</b><small>" +
+    esc(month) +
+    '</small></span><span class="grow"><b>' +
     esc(title(n)) +
-    "<small>" +
-    esc([fmt(n.date), desc(n)].filter(Boolean).join(" · ")) +
+    "</b><small>" +
+    esc([n.startTime, desc(n) || fmt(n.date)].filter(Boolean).join(" · ")) +
     "</small></span>" +
-    icon("next") +
+    icon(n.pin ? "pin" : "next") +
     "</button>"
   );
 }
@@ -470,6 +480,9 @@ function editor() {
     button("exit", t("back"), "back", "quiet") +
     button("more", t("more"), "settings", "quiet") +
     "</div>" +
+    '<div class="noteheading color-' +
+    folderColor(folderOf(n.folder)) +
+    '">' +
     field(
       t("title"),
       textInput(
@@ -483,6 +496,7 @@ function editor() {
     '</span><p class="meta" id="pageTrail">' +
     esc(desc(n)) +
     "</p>" +
+    "</div>" +
     '<details id="metadata" class="notemeta"' +
     (detailsOpen ? " open" : "") +
     "><summary>" +
