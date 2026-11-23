@@ -386,6 +386,7 @@ function settingsView() {
     "<h1>" +
     t("settings") +
     "</h1>" +
+    archiveSettings() +
     button("ui", t("interface") + " · " + names[ui], "globe", "rowbtn") +
     '<section class="section"><h2>' +
     t("storage") +
@@ -614,7 +615,13 @@ function ask(label, action, id) {
     "<h2>" +
       t(label) +
       '</h2><div class="actions">' +
-      button(action, t("delete"), "bin", "danger", id) +
+      button(
+        action,
+        t(action === "deletePage" ? "arToBin" : "delete"),
+        "bin",
+        "danger",
+        id,
+      ) +
       button("close", t("cancel"), "", "quiet") +
       "</div>",
   );
@@ -664,6 +671,7 @@ function render() {
       }[tab]();
   $("#screen").dataset.view = editing ? "editor" : tab;
   organizerBind();
+  bindArchive();
   const meta = $("#metadata");
   if (meta)
     meta.ontoggle = () => {
@@ -808,6 +816,10 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) window.stopActiveRecording();
 });
 async function action(a, v) {
+  if (a.startsWith("ar")) {
+    await archiveAction(a, v);
+    return;
+  }
   if (a.startsWith("org")) {
     await organizerAction(a, v);
     return;
@@ -839,8 +851,9 @@ async function action(a, v) {
           t("more") +
           "</h2>" +
           button("pin", t(n.pin ? "unpin" : "pin"), "pin", "rowbtn") +
+          button("orgMove", t("moveMeeting"), "folder", "rowbtn") +
           button("share", t("share"), "share", "rowbtn") +
-          button("askDelete", t("delete"), "bin", "rowbtn") +
+          button("askDelete", t("arToBin"), "bin", "rowbtn") +
           button("close", t("close"), "", "soft"),
       );
       return;
@@ -851,33 +864,11 @@ async function action(a, v) {
       closePop();
       break;
     case "askDelete":
-      ask("deleteMeeting", "deletePage", editing);
+      ask("arDiscard", "deletePage", editing);
       return;
-    case "deletePage": {
-      if (recording) await stopRecording();
-      ++startToken;
-      const id = editing;
-      await transaction(["pages", "audio"], (tx) => {
-        tx.objectStore("pages").delete(id);
-        const store = tx.objectStore("audio");
-        store.index("page").openKeyCursor(IDBKeyRange.only(id)).onsuccess = (
-          e,
-        ) => {
-          const c = e.target.result;
-          if (c) {
-            store.delete(c.primaryKey);
-            c.continue();
-          }
-        };
-      });
-      notes = notes.filter((n) => n.id !== id);
-      dirty.delete(id);
-      unsavedAudio = null;
-      clearClips();
-      editing = null;
-      closePop();
-      break;
-    }
+    case "deletePage":
+      await discardMeeting(v);
+      return;
     case "record":
       if (recording || starting) return;
       pop(
@@ -992,11 +983,7 @@ window.appBack = () => {
 (async () => {
   try {
     db = await openDatabase();
-    [notes, folders, customTemplates] = await Promise.all(
-      ["pages", "folders", "templates"].map((store) =>
-        query(db.transaction(store).objectStore(store).getAll()),
-      ),
-    );
+    await reloadNotebook();
     render();
   } catch (e) {
     $("#screen").textContent = t("error");

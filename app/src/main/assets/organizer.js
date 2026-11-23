@@ -74,6 +74,7 @@ let folders = [],
   customTemplates = [],
   homeFolder = "",
   homeCategory = "",
+  calendarSpan = 1,
   pickedDate = day(),
   monthShown = pickedDate.slice(0, 7);
 const folderOf = (id) => folders.find((f) => f.id === id);
@@ -400,7 +401,14 @@ function eventMap() {
     });
     append(n.followDate, { n, key: "followup", label: title(n), time: "" });
     for (const o of n.tasks)
-      if (!o.done) append(o.due, { n, key: "due", label: o.text, time: "" });
+      if (!o.done)
+        append(o.due, {
+          n,
+          key: "due",
+          label: o.text,
+          owner: o.owner,
+          time: "",
+        });
   }
   return events;
 }
@@ -451,9 +459,6 @@ function calendarView() {
       "</button>"
     );
   }).join("");
-  const list = (events.get(pickedDate) || []).sort((a, b) =>
-    (a.time || "24").localeCompare(b.time || "24"),
-  );
   return (
     '<div class="split"><h1>' +
     t("calendar") +
@@ -489,24 +494,83 @@ function calendarView() {
     "</h2>" +
     button("orgNew", t("new"), "plus", "textbtn") +
     "</div>" +
-    (list.length
-      ? list
-          .map(
-            (e) =>
-              '<button class="item" data-act="openPage" data-val="' +
-              e.n.id +
-              '"><i class="eventicon">' +
-              icon(e.key === "due" ? "tasks" : "calendar") +
-              '</i><span class="grow">' +
-              esc(e.label) +
-              "<small>" +
-              esc([t(e.key), e.time, e.n.company].filter(Boolean).join(" · ")) +
-              "</small></span>" +
-              icon("next") +
-              "</button>",
-          )
-          .join("")
-      : '<p class="muted">' + t("noEvents") + "</p>")
+    '<div class="agendatabs" role="group" aria-label="' +
+    esc(t("calendar")) +
+    '">' +
+    [1, 7]
+      .map(
+        (span) =>
+          '<button data-act="orgSpan" data-val="' +
+          span +
+          '" aria-pressed="' +
+          (span === calendarSpan) +
+          '">' +
+          t(span === 1 ? "agendaDay" : "agendaWeek") +
+          "</button>",
+      )
+      .join("") +
+    "</div>" +
+    agendaEntries(events)
+  );
+}
+function agendaEntries(events) {
+  let result = "";
+  const date = dateFrom(pickedDate);
+  for (
+    let index = 0;
+    index < calendarSpan;
+    index++, date.setDate(date.getDate() + 1)
+  ) {
+    const key = day(date);
+    const entries = (events.get(key) || []).sort(
+      (a, b) =>
+        (a.time || "24").localeCompare(b.time || "24") ||
+        a.label.localeCompare(b.label, ui),
+    );
+    if (!entries.length) continue;
+    if (calendarSpan > 1) {
+      const weekday = new Intl.DateTimeFormat(ui, {
+        weekday: "long",
+        day: "numeric",
+        month: "short",
+      }).format(date);
+      result += '<h3 class="agendadate">' + esc(weekday) + "</h3>";
+    }
+    result += entries
+      .map((e) => {
+        const details = [
+          t(e.key),
+          e.time,
+          e.owner,
+          e.n.company || folderPath(e.n.folder)[0]?.name,
+        ];
+        return (
+          '<button class="item agendaevent" data-act="openPage" data-val="' +
+          esc(e.n.id) +
+          '"><i class="eventicon">' +
+          icon(
+            e.key === "due"
+              ? "tasks"
+              : e.key === "followup"
+                ? "repeat"
+                : "calendar",
+          ) +
+          '</i><span class="grow">' +
+          esc(e.label) +
+          "<small>" +
+          esc(details.filter(Boolean).join(" · ")) +
+          "</small></span>" +
+          icon("next") +
+          "</button>"
+        );
+      })
+      .join("");
+  }
+  return (
+    result ||
+    '<p class="muted">' +
+      t(calendarSpan === 1 ? "noEvents" : "noWeekEvents") +
+      "</p>"
   );
 }
 function sectionFields(n) {
@@ -523,33 +587,64 @@ function sectionFields(n) {
     )
     .join("");
 }
-function organizationFields(n) {
-  const opts = folders.slice().sort((a, b) =>
-    folderPath(a.id)
-      .map((x) => x.name)
-      .join("/")
-      .localeCompare(
-        folderPath(b.id)
-          .map((x) => x.name)
-          .join("/"),
-        ui,
-      ),
+function folderDestinations() {
+  return folders
+    .map((f) => ({
+      id: f.id,
+      path: folderPath(f.id)
+        .map((x) => x.name)
+        .join(" / "),
+    }))
+    .sort((a, b) => a.path.localeCompare(b.path, ui));
+}
+function chooseMeetingFolder() {
+  const n = note();
+  if (!n) return;
+  const destinations = [
+    { id: "", path: t("noFolder") },
+    ...folderDestinations(),
+  ];
+  pop(
+    "<h2>" +
+      t("moveMeeting") +
+      "</h2>" +
+      field(t("searchFolders"), '<input type="search" id="moveSearch">') +
+      '<div id="moveDestinations"></div>' +
+      button("close", t("cancel"), "", "quiet"),
   );
+  const list = $("#moveDestinations"),
+    search = $("#moveSearch");
+  function updateList() {
+    const terms = normalizeSearch(search.value)
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const matches = destinations.filter((f) =>
+      terms.every((w) => normalizeSearch(f.path).includes(w)),
+    );
+    list.innerHTML =
+      matches
+        .map((f) =>
+          button(
+            "orgMoveTo",
+            f.path,
+            f.id === (n.folder || "") ? "check" : "folder",
+            "rowbtn",
+            f.id,
+          ),
+        )
+        .join("") || '<p class="muted">' + t("noFolderMatch") + "</p>";
+  }
+  search.oninput = updateList;
+  updateList();
+}
+function organizationFields(n) {
+  const opts = folderDestinations();
   return field(
     t("folder"),
     '<select data-key="folder">' +
       option("", t("noFolder"), n.folder || "") +
-      opts
-        .map((f) =>
-          option(
-            f.id,
-            folderPath(f.id)
-              .map((x) => x.name)
-              .join(" / "),
-            n.folder,
-          ),
-        )
-        .join("") +
+      opts.map((f) => option(f.id, f.path, n.folder)).join("") +
       "</select>",
   );
 }
@@ -606,6 +701,25 @@ async function organizerAction(a, v) {
       librarySearch.limit += 30;
       refreshHomeHits();
       break;
+    case "orgMove":
+      chooseMeetingFolder();
+      return;
+    case "orgMoveTo": {
+      const n = note();
+      if (!n || (v && !folderOf(v))) return;
+      const old = n.folder;
+      n.folder = v;
+      try {
+        await persist(n);
+      } catch (error) {
+        n.folder = old;
+        throw error;
+      }
+      closePop();
+      render();
+      notify(t("folder") + " · " + (folderOf(v)?.name || t("noFolder")));
+      return;
+    }
     case "orgFolder":
       resetHomeSearch();
       showAllFolders = false;
@@ -658,6 +772,10 @@ async function organizerAction(a, v) {
     case "orgUse":
       closePop();
       await newPage(v);
+      break;
+    case "orgSpan":
+      calendarSpan = v === "7" ? 7 : 1;
+      render();
       break;
     case "orgDay":
       pickedDate = v;

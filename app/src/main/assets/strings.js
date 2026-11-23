@@ -725,3 +725,151 @@ Object.assign(strings, {
     "Tareas pendientes",
   ],
 });
+Object.assign(strings, {
+  moveMeeting: [
+    "Move meeting",
+    "Besprechung verschieben",
+    "Toplantıyı taşı",
+    "Mover reunión",
+  ],
+  searchFolders: [
+    "Search folder paths",
+    "Ordnerpfade durchsuchen",
+    "Klasör yollarında ara",
+    "Buscar rutas de carpetas",
+  ],
+  noFolderMatch: [
+    "No matching folders.",
+    "Keine passenden Ordner.",
+    "Eşleşen klasör yok.",
+    "Ninguna carpeta coincide.",
+  ],
+  arTitle: [
+    "Notebook backup",
+    "Notizbuchsicherung",
+    "Defter yedeği",
+    "Copia del cuaderno",
+  ],
+  arInfo: [
+    "Save meetings, folders, templates and recordings in one file. Keep this unencrypted file in a private location. The bin is excluded.",
+    "Besprechungen, Ordner, Vorlagen und Audios in einer Datei sichern. Bewahre die unverschlüsselte Datei geschützt auf. Der Papierkorb ist ausgenommen.",
+    "Toplantı, klasör, şablon ve ses kayıtlarını tek dosyaya kaydet. Şifresiz yedeği özel bir konumda sakla. Çöp kutusu yedeğe dahil edilmez.",
+    "Guarda reuniones, carpetas, plantillas y audios en un archivo. Guarda el archivo sin cifrar en un lugar privado. Se excluye la papelera.",
+  ],
+  arSave: [
+    "Save backup",
+    "Sicherung speichern",
+    "Yedek kaydet",
+    "Guardar copia",
+  ],
+  arOpen: ["Open backup", "Sicherung öffnen", "Yedek aç", "Abrir copia"],
+  arMeetings: ["Meetings", "Besprechungen", "Toplantılar", "Reuniones"],
+  arPreparing: [
+    "Preparing the backup…",
+    "Sicherung wird vorbereitet …",
+    "Yedek hazırlanıyor…",
+    "Preparando la copia…",
+  ],
+  arChecking: [
+    "Checking the notebook…",
+    "Notizbuch wird geprüft …",
+    "Defter kontrol ediliyor…",
+    "Comprobando el cuaderno…",
+  ],
+  arKeep: [
+    "These items will be added. Existing items keep their current contents.",
+    "Diese Einträge werden ergänzt. Vorhandene Einträge behalten ihren Inhalt.",
+    "Aşağıdaki kayıtlar eklenecek. Mevcut kayıtların içeriği korunur.",
+    "Se añadirán estos elementos. Los existentes conservan su contenido.",
+  ],
+  arPreview: [
+    "Import preview",
+    "Importvorschau",
+    "İçe aktarma önizlemesi",
+    "Vista previa de importación",
+  ],
+  arImport: [
+    "Add missing items",
+    "Fehlende ergänzen",
+    "Eksik kayıtları ekle",
+    "Añadir elementos que faltan",
+  ],
+  arImported: [
+    "Items added",
+    "Hinzugefügte Einträge",
+    "Eklenen kayıtlar",
+    "Elementos añadidos",
+  ],
+  arExported: [
+    "Backup file prepared",
+    "Sicherungsdatei erstellt",
+    "Yedek dosyası hazır",
+    "Archivo de copia preparado",
+  ],
+  arInvalid: [
+    "Incomplete, damaged or unsupported notebook file.",
+    "Unvollständige, beschädigte oder unbekannte Sicherung.",
+    "Defter dosyası eksik, bozuk veya desteklenmeyen biçimde.",
+    "Archivo incompleto, dañado o no compatible.",
+  ],
+  arToBin: [
+    "Move to bin",
+    "In den Papierkorb",
+    "Çöp kutusuna taşı",
+    "Mover a la papelera",
+  ],
+  arTrash: ["Recycle bin", "Papierkorb", "Çöp kutusu", "Papelera"],
+  arTrashHelp: [
+    "Restore a meeting with its tasks and recordings, or erase it permanently.",
+    "Besprechung samt Aufgaben und Audios wiederherstellen oder endgültig löschen.",
+    "Toplantıyı görevleri ve ses kayıtlarıyla geri alabilir veya kalıcı olarak silebilirsin.",
+    "Recupera la reunión con sus tareas y audios o elimínala definitivamente.",
+  ],
+  arRestore: ["Restore", "Wiederherstellen", "Geri yükle", "Restaurar"],
+  arPurge: [
+    "Delete permanently",
+    "Endgültig löschen",
+    "Kalıcı olarak sil",
+    "Eliminar definitivamente",
+  ],
+  arPurgeHelp: [
+    "Permanently erase this meeting, its tasks and recordings?",
+    "Diese Besprechung samt Aufgaben und Audios endgültig löschen?",
+    "Bu toplantı, görevleri ve ses kayıtları kalıcı olarak silinsin mi?",
+    "¿Eliminar definitivamente esta reunión con sus tareas y audios?",
+  ],
+  arMoved: [
+    "Meeting moved to the bin",
+    "Besprechung im Papierkorb",
+    "Toplantı çöp kutusuna taşındı",
+    "Reunión en la papelera",
+  ],
+  arEmpty: [
+    "The bin is empty.",
+    "Der Papierkorb ist leer.",
+    "Çöp kutusu boş.",
+    "La papelera está vacía.",
+  ],
+  arDiscard: [
+    "Move this meeting to the bin?",
+    "Diese Besprechung in den Papierkorb verschieben?",
+    "Toplantı çöp kutusuna taşınsın mı?",
+    "¿Mover esta reunión a la papelera?",
+  ],
+});
+
+Object.assign(strings, {
+  agendaDay: ["Day", "Tag", "Gün", "Día"],
+  agendaWeek: [
+    "Next 7 days",
+    "Nächste 7 Tage",
+    "Sonraki 7 gün",
+    "Próximos 7 días",
+  ],
+  noWeekEvents: [
+    "No meetings or deadlines in these seven days.",
+    "Keine Besprechungen oder Fristen in diesen sieben Tagen.",
+    "Bu yedi gün içinde toplantı veya termin yok.",
+    "No hay reuniones ni fechas pendientes en estos siete días.",
+  ],
+});

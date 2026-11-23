@@ -19,6 +19,7 @@ public final class MainActivity extends Activity {
     private static final String ORIGIN = "https://appassets.androidplatform.net";
     private WebView web;
     private PermissionRequest pendingMic;
+    private ArchiveFiles archives;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -45,7 +46,12 @@ public final class MainActivity extends Activity {
                         java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
             }
         });
+        archives = new ArchiveFiles(this, web);
+        web.addJavascriptInterface(archives, "ArchiveDevice");
         web.setWebChromeClient(new WebChromeClient() {
+            @Override public boolean onShowFileChooser(WebView view, ValueCallback<android.net.Uri[]> callback, FileChooserParams params) {
+                return archives.chooseSource(callback);
+            }
             @Override public void onPermissionRequest(PermissionRequest req) {
                 if (!ORIGIN.equals(req.getOrigin().getScheme() + "://" + req.getOrigin().getAuthority()) ||
                     !java.util.Arrays.asList(req.getResources()).contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
@@ -108,6 +114,13 @@ public final class MainActivity extends Activity {
                 startActivity(Intent.createChooser(share, null));
             });
         }
+    }
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        if (!archives.onResult(request, result, data)) super.onActivityResult(request, result, data);
+    }
+    @Override protected void onDestroy() {
+        archives.close();
+        super.onDestroy();
     }
     @Override protected void onPause() {
         web.evaluateJavascript("window.stopActiveRecording && window.stopActiveRecording()", null);

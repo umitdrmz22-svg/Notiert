@@ -1290,3 +1290,77 @@ h2 {
   justify-content: flex-start;
   column-gap: 18px;
 }
+.vault {
+  margin: 14px 0 10px;
+  padding: 14px;
+  background: #fff4d6;
+  border-left: 4px solid #b58844;
+  border-radius: 4px 10px 8px 4px;
+}
+.vault h2 {
+  margin-top: 0;
+}
+.vault .actions {
+  margin-top: 10px;
+}
+.archivecounts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin: 12px 0;
+}
+.archivecounts div {
+  background: var(--tint);
+  border-radius: 5px;
+  padding: 7px 10px;
+}
+.archivecounts b,
+.archivecounts span,
+.trashentry small {
+  display: block;
+}
+.archivecounts b {
+  font:
+    1.5rem "DM Serif Text",
+    Georgia,
+    serif;
+}
+.trashentry {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0;
+}
+.trashentry small {
+  color: var(--muted);
+}
+.binlink {
+  margin-bottom: 9px;
+}
+.binlink span {
+  margin-left: auto;
+}
+
+.agendatabs {
+  display: inline-flex;
+  border: 1px solid #b8beb2;
+  border-radius: 0.55rem;
+  overflow: hidden;
+  margin: 0.2rem 0 0.6rem;
+}
+.agendatabs button {
+  border: 0;
+  border-radius: 0;
+  padding: 0.55rem 0.9rem;
+  background: #fffaf1;
+}
+.agendatabs button[aria-pressed="true"] {
+  color: #fff;
+  background: #314b47;
+}
+.agendadate {
+  margin: 1rem 0 0.3rem;
+  color: #77532c;
+  font-size: 1rem;
+}
+.agendaevent .grow {
+  overflow-wrap: anywhere;
+}
